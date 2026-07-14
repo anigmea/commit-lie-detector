@@ -1,0 +1,33 @@
+{
+  "name": "commit-lie-detector",
+  "version": "0.1.0",
+  "description": "An LLM-powered git hook that catches bad commit messages and suggests better ones",
+  "type": "module",
+  "main": "dist/cli.js",
+  "bin": {
+    "commit-lie-detector": "./dist/cli.js",
+    "cld": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "node --test dist/test/**/*.test.js",
+    "test:src": "tsx --test src/test/**/*.test.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["git", "commit", "ai", "hook", "llm", "anthropic", "openai"],
+  "author": "anigmea",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.27.0",
+    "openai": "^4.56.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0",
+    "tsx": "^4.19.0"
+  }
+}

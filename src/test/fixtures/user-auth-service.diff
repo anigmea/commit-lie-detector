@@ -1,0 +1,108 @@
+diff --git a/src/auth/UserAuthService.ts b/src/auth/UserAuthService.ts
+new file mode 100644
+index 0000000..1a2b3c4
+--- /dev/null
++++ b/src/auth/UserAuthService.ts
+@@ -0,0 +1,52 @@
++import jwt from "jsonwebtoken";
++import { db } from "../db";
++import { User } from "../models/User";
++
++export class UserAuthService {
++  private readonly secret: string;
++
++  constructor(secret: string) {
++    this.secret = secret;
++  }
++
++  async validateToken(token: string): Promise<User | null> {
++    try {
++      const payload = jwt.verify(token, this.secret) as { userId: string };
++      const user = await db.users.findById(payload.userId);
++      if (!user || !user.active) return null;
++      return user;
++    } catch {
++      return null;
++    }
++  }
++
++  async createSession(userId: string): Promise<string> {
++    const user = await db.users.findById(userId);
++    if (!user) throw new Error(`User ${userId} not found`);
++    return jwt.sign({ userId }, this.secret, { expiresIn: "7d" });
++  }
++
++  async revokeSession(token: string): Promise<void> {
++    const payload = jwt.verify(token, this.secret) as { userId: string };
++    await db.sessions.deleteByUserId(payload.userId);
++  }
++
++  async refreshToken(token: string): Promise<string> {
++    const user = await this.validateToken(token);
++    if (!user) throw new Error("Invalid or expired token");
++    return this.createSession(user.id);
++  }
++}
+diff --git a/api/routes.ts b/api/routes.ts
+index 5e6f7a8..9b0c1d2 100644
+--- a/api/routes.ts
++++ b/api/routes.ts
+@@ -1,12 +1,52 @@
+ import express from "express";
++import { UserAuthService } from "../src/auth/UserAuthService";
+
+ const router = express.Router();
++const authService = new UserAuthService(process.env.JWT_SECRET!);
+
+ // Existing routes
+ router.get("/health", (req, res) => res.json({ status: "ok" }));
+
++// New: POST /auth/login
++router.post("/auth/login", async (req, res) => {
++  const { userId } = req.body;
++  if (!userId) return res.status(400).json({ error: "userId required" });
++  try {
++    const token = await authService.createSession(userId);
++    res.json({ token });
++  } catch (err: any) {
++    res.status(404).json({ error: err.message });
++  }
++});
++
++// New: POST /auth/refresh
++router.post("/auth/refresh", async (req, res) => {
++  const auth = req.headers.authorization;
++  if (!auth?.startsWith("Bearer ")) {
++    return res.status(401).json({ error: "Bearer token required" });
++  }
++  try {
++    const newToken = await authService.refreshToken(auth.slice(7));
++    res.json({ token: newToken });
++  } catch (err: any) {
++    res.status(401).json({ error: err.message });
++  }
++});
++
+ export default router;
+diff --git a/legacy/auth.js b/legacy/auth.js
+deleted file mode 100644
+index abc1234..0000000
+--- a/legacy/auth.js
++++ /dev/null
+@@ -1,30 +0,0 @@
+-// LEGACY: replaced by UserAuthService
+-const jwt = require("jsonwebtoken");
+-
+-function legacyValidate(token) {
+-  try {
+-    return jwt.verify(token, process.env.SECRET);
+-  } catch {
+-    return null;
+-  }
+-}
+-
+-function legacyCreateToken(userId) {
+-  return jwt.sign({ userId }, process.env.SECRET, { expiresIn: "1d" });
+-}
+-
+-module.exports = { legacyValidate, legacyCreateToken };
