@@ -27,7 +27,7 @@ const FIXTURE_PATH = path.join(__dirname, "fixtures", "user-auth-service.diff");
 const hasKey = Boolean(process.env.ANTHROPIC_API_KEY ?? process.env.OPENAI_API_KEY);
 
 describe("Acceptance test: UserAuthService fixture", () => {
-  it("requires an API key to run (skips otherwise)", async () => {
+  it("detects a misleading message with a live provider", { skip: !hasKey }, async () => {
     if (!hasKey) {
       console.log("    [skipped] No API key set — set ANTHROPIC_API_KEY or OPENAI_API_KEY");
       return;
@@ -68,7 +68,7 @@ describe("Acceptance test: UserAuthService fixture", () => {
 });
 
 describe("Unit: honest commit passes", () => {
-  it("returns honest=true for accurate short message", async () => {
+  it("returns honest=true for accurate short message", { skip: !hasKey }, async () => {
     if (!hasKey) {
       console.log("    [skipped] No API key set");
       return;
