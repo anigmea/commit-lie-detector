@@ -9,16 +9,24 @@
     "cld": "./dist/cli.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/copy-fixtures.mjs",
     "dev": "tsc --watch",
     "test": "node --test dist/test/**/*.test.js",
     "test:src": "tsx --test src/test/**/*.test.ts",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build && npm test"
   },
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": ["git", "commit", "ai", "hook", "llm", "anthropic", "openai"],
+  "keywords": [
+    "git",
+    "commit",
+    "ai",
+    "hook",
+    "llm",
+    "anthropic",
+    "openai"
+  ],
   "author": "anigmea",
   "license": "MIT",
   "dependencies": {
@@ -29,5 +37,11 @@
     "@types/node": "^22.0.0",
     "typescript": "^5.5.0",
     "tsx": "^4.19.0"
-  }
+  },
+  "files": [
+    "dist/*.js",
+    "dist/*.d.ts",
+    "README.md",
+    "LICENSE"
+  ]
 }

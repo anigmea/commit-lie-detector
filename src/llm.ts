@@ -299,35 +299,25 @@ export async function evaluate(
     .replace(/\s*```\s*$/, "")
     .trim();
 
+  return parseEvaluateResult(cleaned, commitMessage);
+}
+
+/** Strict response validation: malformed model output must not pass a commit. */
+export function parseEvaluateResult(raw: string, _commitMessage: string): EvaluateResult {
   let parsed: any;
-  try {
-    parsed = JSON.parse(cleaned);
-  } catch {
-    throw makeLLMError(
-      "parse_error",
-      `LLM returned non-JSON response: ${cleaned.slice(0, 200)}`,
-      false
-    );
+  try { parsed = JSON.parse(raw); } catch {
+    throw makeLLMError("parse_error", "LLM returned invalid JSON.", false);
   }
-
-  // Validate required fields, coerce types
-  const honest = Boolean(parsed.honest);
-  const accusation =
-    typeof parsed.accusation === "string" && parsed.accusation.length > 0
-      ? parsed.accusation
-      : null;
-  const suggested_message =
-    typeof parsed.suggested_message === "string"
-      ? parsed.suggested_message.trim()
-      : commitMessage;
-  const confidence =
-    typeof parsed.confidence === "number"
-      ? Math.max(0, Math.min(1, parsed.confidence))
-      : honest
-      ? 0.8
-      : 0.2;
-
-  return { honest, accusation, suggested_message, confidence };
+  if (!parsed || typeof parsed.honest !== "boolean" ||
+      typeof parsed.suggested_message !== "string" || !parsed.suggested_message.trim() ||
+      typeof parsed.confidence !== "number" || !Number.isFinite(parsed.confidence) ||
+      parsed.confidence < 0 || parsed.confidence > 1 ||
+      !(parsed.accusation === null || typeof parsed.accusation === "string")) {
+    throw makeLLMError("parse_error", "LLM response did not match the required schema.", false);
+  }
+  const honest = parsed.honest && parsed.confidence >= 0.5;
+  const accusation = honest ? null : (parsed.accusation?.trim() || "Response confidence is below the acceptance threshold.");
+  return { honest, accusation, suggested_message: parsed.suggested_message.trim(), confidence: parsed.confidence };
 }
 
 /**

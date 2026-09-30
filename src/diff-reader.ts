@@ -99,7 +99,7 @@ export function readStagedDiff(): DiffResult {
       `\n# [TRUNCATED: showing first ${MAX_DIFF_LINES} of ${totalLines} lines]`;
   }
 
-  const isEmpty = !finalDiff.trim() && !stat.trim();
+  const isEmpty = !finalDiff.trim();
 
   return {
     stat,
