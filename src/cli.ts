@@ -74,7 +74,9 @@ function parseFlags(args: string[]): {
     }
   }
 
-  return { subcommand: positional[0], positional, ...flags };
+  const subcommand = args.includes("--help") || args.includes("-h") ? "help"
+    : args.includes("--version") ? "version" : positional[0];
+  return { subcommand, positional, ...flags };
 }
 
 function printHelp(): void {
