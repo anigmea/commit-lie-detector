@@ -2,8 +2,7 @@
 
 An LLM-powered git hook that catches misleading commit messages and suggests better ones.
 
-[![npm version](https://badge.fury.io/js/commit-lie-detector.svg)](https://www.npmjs.com/package/commit-lie-detector)
-[![CI](https://github.com/anigmea/commit-lie-detector/actions/workflows/publish.yml/badge.svg)](https://github.com/anigmea/commit-lie-detector/actions)
+Status: release candidate, not yet published to npm. Offline build/tests run locally; live-provider acceptance tests require a user-supplied API key and are reported as skipped when absent. No public adoption claim is made.
 
 ---
 
@@ -14,6 +13,17 @@ Your diff changed 23 files, added 2 new API endpoints, and refactored the auth m
 ---
 
 ## Install
+
+Until the owner publishes to npm, install from a reviewed checkout:
+
+```sh
+npm ci
+npm run build
+npm test
+npm install -g .
+```
+
+The npx commands below apply after npm publication.
 
 ```sh
 # Install the git hook in your current repo
@@ -175,7 +185,7 @@ Regex-based commit linters check format (length, prefix). They can't read your d
 | aicommits | ❌ | ✅ | — |
 | ai-commit | ❌ | ✅ | — |
 
-Evaluate mode — checking an existing message against the diff — is the differentiator. No other tool does this.
+Evaluate mode compares an existing message with the staged diff. The comparison above is a design summary, not a verified survey of every competing tool.
 
 ---
 
@@ -198,3 +208,11 @@ npx commit-lie-detector doctor
 ## License
 
 MIT
+
+## Validation and limits
+
+Offline tests cover staged-diff parsing, CLI flags and strict response validation. Two optional live-provider acceptance tests are explicitly skipped without API credentials. Passing offline tests does not establish provider availability or quality.
+
+The tool sends the staged diff and commit message to the selected provider. Review confidential code before use. Lock/generated files are filtered from diff bodies; the stat summary can still mention them. The detector is advisory, can misclassify messages, and fails open in hooks on provider errors. --strict blocks an identified mismatch, not outages.
+
+Release checklist: review and merge the release PR, verify a clean package install, run provider acceptance tests with an owner-approved account, then publish via the owner's npm account. No API credentials are bundled.
